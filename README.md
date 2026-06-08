@@ -6,7 +6,7 @@ The project is inspired by recent literature showing that central bank communica
 
 ---
 
-## 📌 Pipeline Overview
+## Pipeline Overview
 
 ### Stage 1: Fine-tune Encoder (RuBERT)
 Contrastive learning is used to build high-quality sentence embeddings tailored to central bank language.
@@ -24,7 +24,7 @@ A neural classifier predicts:
 
 ---
 
-## 🏷 Labels
+## Labels
 
 ### Topic (12)
 - Inflation  
