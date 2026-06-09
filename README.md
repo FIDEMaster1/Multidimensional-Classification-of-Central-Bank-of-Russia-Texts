@@ -13,7 +13,6 @@ The resulting sentence-level predictions are aggregated into communication-based
 ## Repository structure
 
 ```text
-.
 ├── configs/
 │   ├── labels.json
 │   ├── classical_baselines.yaml
@@ -39,6 +38,5 @@ The resulting sentence-level predictions are aggregated into communication-based
 │   ├── 08_final_rubert_models.py
 │   └── 09_error_analysis_and_indices.py
 │
-├── requirements.txt
 ├── .gitignore
 └── README.md
