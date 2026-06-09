@@ -1,0 +1,29 @@
+{
+  "topic": {
+    "0": "Inflation",
+    "1": "Interest rate",
+    "2": "Monetary conditions",
+    "3": "Credit",
+    "4": "Expectations",
+    "5": "Economic activity",
+    "6": "Labor market",
+    "7": "External conditions",
+    "8": "Fiscal policy",
+    "9": "Exchange rate",
+    "10": "Financial sector & Macroprudential policy",
+    "11": "Other"
+  },
+  "stance": {
+    "0": "Forward-looking",
+    "1": "Backward-looking",
+    "2": "Other"
+  },
+  "sentiment": {
+    "0": "Hawkish",
+    "1": "Dovish",
+    "2": "Neutral",
+    "3": "Risk-highlighting",
+    "4": "Confidence-building",
+    "5": "Other"
+  }
+}
