@@ -1,0 +1,130 @@
+project:
+  name: cbr_monetary_policy_nlp
+  stage: stage_02_classical_baselines
+  seed: 42
+
+paths:
+  project_dir: cbr_monetary_policy_nlp
+  data_dir: data
+  split_dir: data/splits
+  output_dir: outputs/stage_02_classical_baselines
+  tables_dir: outputs/stage_02_classical_baselines/tables
+  reports_dir: outputs/stage_02_classical_baselines/reports
+  confusion_matrices_dir: outputs/stage_02_classical_baselines/confusion_matrices
+  models_dir: outputs/stage_02_classical_baselines/models
+  figures_dir: outputs/stage_02_classical_baselines/figures
+
+labels:
+  config_path: configs/labels.json
+  tasks:
+    - topic
+    - stance
+    - sentiment
+
+splits:
+  main_doc_manual:
+    path: data/splits/main_doc_split_manual.csv
+    role: main
+    description: Manual-only document-level split.
+    check_document_leakage: true
+  main_doc_with_synthetic:
+    path: data/splits/main_doc_split_combined_with_synthetic_train.csv
+    role: main
+    description: Document-level split with synthetic examples added only to train.
+    check_document_leakage: true
+  sentence_diagnostic:
+    path: data/splits/sentence_diagnostic_split_manual.csv
+    role: diagnostic
+    description: Sentence-level diagnostic split; used only as a sanity check.
+    check_document_leakage: false
+  time_holdout:
+    path: data/splits/time_holdout_split_manual.csv
+    role: stress_test
+    description: Temporal robustness split.
+    check_document_leakage: true
+
+run:
+  splits_to_run:
+    - main_doc_manual
+    - main_doc_with_synthetic
+    - sentence_diagnostic
+    - time_holdout
+  eval_splits:
+    - validation
+    - test
+  save_models: true
+
+vectorizers:
+  word_tfidf:
+    analyzer: word
+    ngram_range: [1, 2]
+    min_df: 2
+    max_df: 0.95
+    sublinear_tf: true
+    lowercase: true
+  char_tfidf:
+    analyzer: char_wb
+    ngram_range: [3, 5]
+    min_df: 2
+    max_df: 0.95
+    sublinear_tf: true
+    lowercase: true
+
+models:
+  majority:
+    estimator: DummyClassifier
+    params:
+      strategy: most_frequent
+  stratified_dummy:
+    estimator: DummyClassifier
+    params:
+      strategy: stratified
+      random_state: 42
+  tfidf_word_logreg:
+    vectorizer: word_tfidf
+    estimator: LogisticRegression
+    params:
+      max_iter: 3000
+      solver: liblinear
+      class_weight: balanced
+      random_state: 42
+  tfidf_wordchar_logreg:
+    vectorizer: word_char_tfidf
+    estimator: LogisticRegression
+    params:
+      max_iter: 3000
+      solver: liblinear
+      class_weight: balanced
+      random_state: 42
+  tfidf_wordchar_linear_svm:
+    vectorizer: word_char_tfidf
+    estimator: LinearSVC
+    params:
+      class_weight: balanced
+      random_state: 42
+  tfidf_wordchar_complement_nb:
+    vectorizer: word_char_tfidf
+    estimator: ComplementNB
+    params:
+      alpha: 0.5
+  tfidf_wordchar_multinomial_nb:
+    vectorizer: word_char_tfidf
+    estimator: MultinomialNB
+    params:
+      alpha: 0.5
+
+metrics:
+  primary_metric: sentiment_macro_f1
+  secondary_metric: mean_macro_f1_over_tasks
+  reported_metrics:
+    - accuracy
+    - f1_macro
+    - f1_weighted
+  per_class_metrics: true
+  confusion_matrices: true
+  prediction_tables: true
+
+notes:
+  - Classical baselines establish lexical lower bounds for topic, stance and sentiment.
+  - Sentence diagnostic split is not used as the main thesis result because it can overestimate quality.
+  - Synthetic data must never appear in validation or test.

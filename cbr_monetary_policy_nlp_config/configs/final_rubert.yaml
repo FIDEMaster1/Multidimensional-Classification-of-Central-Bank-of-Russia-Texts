@@ -1,0 +1,139 @@
+project:
+  name: cbr_monetary_policy_nlp
+  stage: stage_06_final_single_task_rubert
+  seed: 42
+
+paths:
+  project_dir: cbr_monetary_policy_nlp
+  data_dir: data
+  split_dir: data/splits
+  labels_path: configs/labels.json
+  output_dir: outputs/stage_06_final_single_task_rubert
+  tables_dir: outputs/stage_06_final_single_task_rubert/tables
+  reports_dir: outputs/stage_06_final_single_task_rubert/reports
+  confusion_matrices_dir: outputs/stage_06_final_single_task_rubert/confusion_matrices
+  predictions_dir: outputs/stage_06_final_single_task_rubert/predictions
+  models_dir: outputs/stage_06_final_single_task_rubert/models
+  trainer_tmp_dir: outputs/stage_06_final_single_task_rubert/trainer_tmp
+  configs_dir: outputs/stage_06_final_single_task_rubert/configs
+
+split:
+  name: main_doc_with_synthetic
+  path: data/splits/main_doc_split_combined_with_synthetic_train.csv
+  dataset_variant: manual_plus_synthetic_train
+  synthetic_train_only: true
+  validation_manual_only: true
+  test_manual_only: true
+
+run:
+  tasks:
+    - sentiment
+    - topic
+    - stance
+  eval_splits:
+    - train
+    - validation
+    - test
+  restore_best_state_dict: true
+  save_probabilities: true
+  save_error_analysis: true
+  save_models: true
+
+base_model:
+  name: DeepPavlov/rubert-base-cased
+  architecture: SingleTaskTransformerClassifier
+  pooling: cls
+
+common_training:
+  max_length: 128
+  batch_size: 8
+  eval_batch_size: 16
+  learning_rate: 0.00002
+  epochs: 4
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  dropout: 0.2
+  gradient_accumulation_steps: 1
+  lr_scheduler_type: cosine
+  fp16: auto
+  class_weights: inverse_frequency_normalized
+  early_stopping_patience: 2
+  metric_for_best_model: eval_f1_macro
+  save_strategy: 'no'
+  evaluation_strategy: epoch
+  logging_strategy: epoch
+  report_to: none
+
+task_configs:
+  sentiment:
+    encoder_name: ruBERT_final_sentiment
+    model_name: DeepPavlov/rubert-base-cased
+    pooling: cls
+    max_length: 128
+    batch_size: 8
+    eval_batch_size: 16
+    learning_rate: 0.00002
+    epochs: 4
+    weight_decay: 0.01
+    warmup_ratio: 0.1
+    dropout: 0.2
+    gradient_accumulation_steps: 1
+    early_stopping_patience: 2
+  topic:
+    encoder_name: ruBERT_final_topic
+    model_name: DeepPavlov/rubert-base-cased
+    pooling: cls
+    max_length: 128
+    batch_size: 8
+    eval_batch_size: 16
+    learning_rate: 0.00002
+    epochs: 4
+    weight_decay: 0.01
+    warmup_ratio: 0.1
+    dropout: 0.2
+    gradient_accumulation_steps: 1
+    early_stopping_patience: 2
+  stance:
+    encoder_name: ruBERT_final_stance
+    model_name: DeepPavlov/rubert-base-cased
+    pooling: cls
+    max_length: 128
+    batch_size: 8
+    eval_batch_size: 16
+    learning_rate: 0.00002
+    epochs: 4
+    weight_decay: 0.01
+    warmup_ratio: 0.1
+    dropout: 0.2
+    gradient_accumulation_steps: 1
+    early_stopping_patience: 2
+
+metrics:
+  primary_metric: macro-F1
+  reported_metrics:
+    - accuracy
+    - f1_macro
+    - f1_weighted
+  per_class_metrics: true
+  confusion_matrices: true
+  prediction_tables: true
+  confidence_outputs:
+    - probability_by_class
+    - confidence
+    - second_confidence
+    - margin
+    - entropy
+    - normalized_entropy
+    - top1_label
+    - top2_label
+
+model_selection:
+  select_by: validation_macro_f1
+  report_test_once_after_selection: true
+  train_plus_validation_for_production: false
+
+notes:
+  - Final reported models are separate single-task ruBERT classifiers.
+  - Test metrics are reported only after model selection on validation.
+  - Synthetic examples are included only in train.
+  - Validation and test contain only manually labeled real sentences.

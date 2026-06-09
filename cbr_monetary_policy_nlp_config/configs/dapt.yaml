@@ -1,0 +1,111 @@
+project:
+  name: cbr_monetary_policy_nlp
+  stages:
+    collect: dapt_00_collect_corpus
+    audit: dapt_01_audit_before_cleaning
+    clean: dapt_02_clean_corpus
+    train: dapt_03_train_rubert_mlm
+    compare: dapt_04_compare_dapt_with_base_rubert
+  seed: 42
+
+paths:
+  project_dir: cbr_monetary_policy_nlp
+  dapt_dir: data/dapt_corpus
+  raw_files_dir: data/dapt_corpus/raw_files
+  texts_dir: data/dapt_corpus/texts
+  tables_dir: data/dapt_corpus/tables
+  logs_dir: data/dapt_corpus/logs
+  audit_dir: data/dapt_corpus/audit
+  cleaned_dir: data/dapt_corpus/cleaned
+  output_dir: outputs/stage_dapt_rubert_cbr_mlm
+  final_model_dir: outputs/stage_dapt_rubert_cbr_mlm/final_model
+
+sources:
+  cbr_base: https://www.cbr.ru
+  annual_report: https://www.cbr.ru/about_br/publ/god/
+  monetary_policy_guidelines: https://www.cbr.ru/about_br/publ/ondkp/
+
+collection:
+  user_agent: Mozilla/5.0
+  request_timeout_seconds: 60
+  retries: 3
+  sleep_between_requests_seconds: 0.3
+  allowed_file_types:
+    - pdf
+    - docx
+    - doc
+    - zip
+    - html
+  keep_html_pages_for_guidelines: true
+
+text_extraction:
+  pdf_engine: pymupdf
+  use_marker_for_pdf: false
+  docx_engine: python-docx
+  keep_page_markers: true
+  paragraph_min_chars: 80
+
+cleaning:
+  deduplicate_documents: true
+  dedup_key_priority:
+    - file_sha1
+    - download_url
+  remove_page_headers: true
+  remove_toc_blocks: true
+  remove_table_heavy_blocks: true
+  remove_service_boilerplate: true
+  remove_broken_extraction_blocks: true
+  strip_leading_chart_noise: true
+  strip_trailing_chart_noise: true
+  strip_trailing_footnotes: true
+  min_clean_paragraph_chars: 80
+  min_clean_paragraph_words: 10
+
+mlm_training:
+  base_model_name: DeepPavlov/rubert-base-cased
+  tokenizer_name: DeepPavlov/rubert-base-cased
+  max_seq_length: 256
+  mlm_probability: 0.15
+  validation_size: 0.05
+  min_line_chars: 80
+  num_train_epochs: 2
+  learning_rate: 0.00005
+  weight_decay: 0.01
+  warmup_ratio: 0.06
+  per_device_train_batch_size: 8
+  per_device_eval_batch_size: 8
+  gradient_accumulation_steps: 4
+  effective_train_batch_size: 32
+  eval_strategy: steps
+  eval_steps: 500
+  save_strategy: steps
+  save_steps: 500
+  logging_steps: 100
+  save_total_limit: 2
+  load_best_model_at_end: true
+  metric_for_best_model: eval_loss
+  greater_is_better: false
+  fp16: auto
+  dataloader_num_workers: 2
+  report_to: none
+
+comparison:
+  downstream_split: data/splits/main_doc_split_combined_with_synthetic_train.csv
+  downstream_task: sentiment
+  compare_against_stage: stage_05_encoder_comparison
+  baseline_encoder_name: ruBERT
+  dapt_encoder_name: ruBERT_DAPT_CBR
+  pooling: cls
+  max_length: 128
+  learning_rate: 0.00002
+  epochs: 4
+  batch_size: 8
+  eval_batch_size: 16
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  dropout: 0.2
+
+notes:
+  - DAPT is optional for the main thesis results unless it improves validation and test quality.
+  - The DAPT corpus is built from long-form Bank of Russia documents and should not include labeled validation or test leakage.
+  - Raw downloaded files are usually too large for GitHub and should be stored externally.
